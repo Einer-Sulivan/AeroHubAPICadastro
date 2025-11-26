@@ -214,13 +214,12 @@ namespace AeroHubAPI.Services
         // ====================================================
 
         // ----------------------------------------------------
-        // PILOTO (CPF) - PESSOA FÍSICA
+        // PILOTO (CPF) - PESSOA FÍSICA - ATUALIZADO PARA DTO ÚNICO
         // ----------------------------------------------------
         public async Task<Pessoa> CadastrarPilotoCpfAsync(PilotoCpfCadastroDto dto)
         {
             await ValidarUsuarioEPerfilExistente(dto.IdUsuario);
 
-            // Certifica-se que o usuário inicial escolheu "Piloto" (Regra de Negócio)
             var usuario = await _context.Usuarios.FindAsync(dto.IdUsuario);
             if (usuario == null || usuario.TipoCadastroUsuario != "Piloto")
             {
@@ -230,7 +229,7 @@ namespace AeroHubAPI.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Criar Pessoa
+                // 1. Criar Pessoa (CPF)
                 var pessoa = new Pessoa
                 {
                     IdUsuario = dto.IdUsuario,
@@ -245,7 +244,7 @@ namespace AeroHubAPI.Services
                     DataAtualizacaoPessoa = DateTime.Now
                 };
                 _context.Pessoas.Add(pessoa);
-                await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync(); // Salva para obter o IdPessoa
 
                 // 2. Criar Endereco
                 var endereco = new Endereco
@@ -276,32 +275,75 @@ namespace AeroHubAPI.Services
                 {
                     IdUsuario = dto.IdUsuario,
                     IdPessoa = pessoa.IdPessoa,
-                    TituloProfissionalPiloto = dto.TituloProfissional,
                     StatusContaPiloto = "Pendente Verificação",
                     DataCriacaoPiloto = DateTime.Now
                 };
                 _context.Pilotos.Add(piloto);
+                await _context.SaveChangesAsync(); // Salva para obter o IdPiloto
 
-                // 5. Atualizar tipoCadastro do Usuario
-                if (usuario != null)
+                // 5. Criar DronePiloto (Equipamento)
+                var drone = new DronePiloto
                 {
-                    usuario.TipoCadastroUsuario = "Piloto"; // Já é Piloto, mas garante a consistência
+                    IdPiloto = piloto.IdPiloto,
+                    ModeloDronePiloto = dto.ModeloDrone,
+                    MarcaDronePiloto = dto.MarcaDrone,
+                    NumeroSerieDronePiloto = dto.NumeroSerieDrone,
+                    NumeroHomologacaoAnatelDronePiloto = dto.NumeroHomologacaoAnatel,
+                    FotoHomologacaoAnatelDronePiloto = dto.FotoHomologacaoAnatelUrl,
+                    AnatelVerificadaDronePiloto = false
+                };
+                _context.DronesPiloto.Add(drone);
+
+                // 6. Criar CertificadosPiloto (Certificações)
+                var certificado = new CertificadosPiloto
+                {
+                    IdPiloto = piloto.IdPiloto,
+                    CategoriaCertificadoPiloto = dto.CategoriaCertificado,
+                    ValidadeCertificadoPiloto = dto.ValidadeCertificado,
+                    NomeCertificadoPiloto = dto.NomeCertificado,
+                    CertificadoVerificadaPiloto = false
+                };
+                _context.CertificadosPiloto.Add(certificado);
+
+                // 7. Inserir Relações N:N
+                // 7a. Especialidades (Piloto_Tem_Especialidade)
+                foreach (var idEspecialidade in dto.IdsEspecialidade)
+                {
+                    _context.PilotoTemEspecialidades.Add(new Piloto_Tem_Especialidade
+                    {
+                        IdPiloto = piloto.IdPiloto,
+                        IdEspecialidade = idEspecialidade,
+                        DataCriacao = DateTime.Now
+                    });
                 }
+                // 7b. Tipos de Operação (Piloto_Tem_TipoOperacao)
+                foreach (var idTipoOperacao in dto.IdsTipoOperacao)
+                {
+                    _context.PilotoTemTiposOperacao.Add(new Piloto_Tem_TipoOperacao
+                    {
+                        IdPiloto = piloto.IdPiloto,
+                        IdTipoOperacao = idTipoOperacao,
+                        DataCriacao = DateTime.Now
+                    });
+                }
+
+                // 8. Atualizar tipoCadastro do Usuario (garante consistência)
+                usuario.TipoCadastroUsuario = "Piloto";
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
                 return pessoa;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                throw new InvalidOperationException("Erro durante o cadastro completo de Piloto CPF. Detalhes: " + ex.Message, ex);
             }
         }
 
         // ----------------------------------------------------
-        // PILOTO (CNPJ) - PESSOA JURÍDICA
+        // PILOTO (CNPJ) - PESSOA JURÍDICA - ATUALIZADO PARA DTO ÚNICO
         // ----------------------------------------------------
         public async Task<Pessoa> CadastrarPilotoCnpjAsync(PilotoCnpjCadastroDto dto)
         {
@@ -375,13 +417,59 @@ namespace AeroHubAPI.Services
                 {
                     IdUsuario = dto.IdUsuario,
                     IdPessoa = pessoa.IdPessoa,
-                    TituloProfissionalPiloto = dto.TituloProfissional,
                     StatusContaPiloto = "Pendente Verificação",
                     DataCriacaoPiloto = DateTime.Now
                 };
                 _context.Pilotos.Add(piloto);
+                await _context.SaveChangesAsync(); // Salva para obter o IdPiloto
 
-                // 6. Atualizar tipoCadastro do Usuario
+                // 6. Criar DronePiloto (Equipamento)
+                var drone = new DronePiloto
+                {
+                    IdPiloto = piloto.IdPiloto,
+                    ModeloDronePiloto = dto.ModeloDrone,
+                    MarcaDronePiloto = dto.MarcaDrone,
+                    NumeroSerieDronePiloto = dto.NumeroSerieDrone,
+                    NumeroHomologacaoAnatelDronePiloto = dto.NumeroHomologacaoAnatel,
+                    FotoHomologacaoAnatelDronePiloto = dto.FotoHomologacaoAnatelUrl,
+                    AnatelVerificadaDronePiloto = false
+                };
+                _context.DronesPiloto.Add(drone);
+
+                // 7. Criar CertificadosPiloto (Certificações)
+                var certificado = new CertificadosPiloto
+                {
+                    IdPiloto = piloto.IdPiloto,
+                    CategoriaCertificadoPiloto = dto.CategoriaCertificado,
+                    ValidadeCertificadoPiloto = dto.ValidadeCertificado,
+                    NomeCertificadoPiloto = dto.NomeCertificado,
+                    CertificadoVerificadaPiloto = false
+                };
+                _context.CertificadosPiloto.Add(certificado);
+
+                // 8. Inserir Relações N:N
+                // 8a. Especialidades (Piloto_Tem_Especialidade)
+                foreach (var idEspecialidade in dto.IdsEspecialidade)
+                {
+                    _context.PilotoTemEspecialidades.Add(new Piloto_Tem_Especialidade
+                    {
+                        IdPiloto = piloto.IdPiloto,
+                        IdEspecialidade = idEspecialidade,
+                        DataCriacao = DateTime.Now
+                    });
+                }
+                // 8b. Tipos de Operação (Piloto_Tem_TipoOperacao)
+                foreach (var idTipoOperacao in dto.IdsTipoOperacao)
+                {
+                    _context.PilotoTemTiposOperacao.Add(new Piloto_Tem_TipoOperacao
+                    {
+                        IdPiloto = piloto.IdPiloto,
+                        IdTipoOperacao = idTipoOperacao,
+                        DataCriacao = DateTime.Now
+                    });
+                }
+
+                // 9. Atualizar tipoCadastro do Usuario
                 if (usuario != null)
                 {
                     usuario.TipoCadastroUsuario = "Piloto"; // Garante consistência
@@ -392,10 +480,10 @@ namespace AeroHubAPI.Services
 
                 return pessoa;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                throw new InvalidOperationException("Erro durante o cadastro completo de Piloto CNPJ. Detalhes: " + ex.Message, ex);
             }
         }
     }
