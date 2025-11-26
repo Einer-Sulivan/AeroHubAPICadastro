@@ -1,0 +1,6 @@
+@AeroHubAPI_HostAddress = http://localhost:5193
+
+GET {{AeroHubAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
