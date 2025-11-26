@@ -2,13 +2,13 @@
 
 namespace AeroHubAPI.DTOs
 {
-    // DTO para o cadastro Piloto PJ (Empresa)
+    // DTO ÚNICO para o cadastro Piloto PJ (Pessoa Jurídica)
     public class PilotoCnpjCadastroDto
     {
         [Required(ErrorMessage = "O ID do Usuário é obrigatório.")]
         public int IdUsuario { get; set; }
 
-        // --- Dados da Empresa ---
+        // --- Dados da Empresa (Tabela Pessoa) ---
         [Required(ErrorMessage = "A razão social é obrigatória.")]
         [StringLength(255)]
         public string RazaoSocial { get; set; } = string.Empty;
@@ -31,7 +31,7 @@ namespace AeroHubAPI.DTOs
         [StringLength(50)]
         public string PorteEmpresa { get; set; } = string.Empty;
 
-        // --- Dados do Representante Legal ---
+        // --- Dados do Representante Legal (Tabela RepresentanteLegalCnpjPessoa) ---
         [Required(ErrorMessage = "O nome do representante é obrigatório.")]
         [StringLength(255)]
         public string NomeRepresentante { get; set; } = string.Empty;
@@ -53,11 +53,7 @@ namespace AeroHubAPI.DTOs
         [StringLength(100)]
         public string CargoRepresentante { get; set; } = string.Empty;
 
-        [StringLength(255)]
-        public string? TituloProfissional { get; set; }
-
-
-        // --- Endereço ---
+        // --- Endereço (Tabela Endereco) ---
         [Required(ErrorMessage = "O CEP é obrigatório.")]
         [StringLength(10)]
         public string Cep { get; set; } = string.Empty;
@@ -84,7 +80,7 @@ namespace AeroHubAPI.DTOs
         [StringLength(255)]
         public string? Complemento { get; set; }
 
-        // --- Documentação ---
+        // --- Documentação (Tabela DocumentoPessoa) ---
         [Required(ErrorMessage = "A URL do documento CNPJ é obrigatória.")]
         [StringLength(500)]
         public string DocumentoCnpjUrl { get; set; } = string.Empty;
@@ -96,5 +92,51 @@ namespace AeroHubAPI.DTOs
         [Required(ErrorMessage = "A URL da Logo da empresa é obrigatória.")]
         [StringLength(500)]
         public string LogoCnpjUrl { get; set; } = string.Empty;
+
+        // =======================================================
+        // --- 5. DADOS DO DRONE (NOVO: Tabela DronePiloto) ---
+        // =======================================================
+        [Required(ErrorMessage = "O modelo do drone é obrigatório.")]
+        [StringLength(100)]
+        public string ModeloDrone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "A marca do drone é obrigatória.")]
+        [StringLength(100)]
+        public string MarcaDrone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "O número de série do drone é obrigatório.")]
+        [StringLength(100)]
+        public string NumeroSerieDrone { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "O número de homologação Anatel é obrigatório.")]
+        [StringLength(100)]
+        public string NumeroHomologacaoAnatel { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "A URL da foto de homologação é obrigatória.")]
+        [StringLength(500)]
+        public string FotoHomologacaoAnatelUrl { get; set; } = string.Empty;
+
+        // =======================================================
+        // --- 6. DADOS DE CERTIFICAÇÃO (NOVO: Tabela CertificadosPiloto) ---
+        // =======================================================
+        [Required(ErrorMessage = "O número da Licença ANAC/CHPR é obrigatório.")]
+        [StringLength(255)]
+        public string NomeCertificado { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "A categoria da licença é obrigatória.")]
+        [StringLength(100)]
+        public string CategoriaCertificado { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "A data de validade do certificado é obrigatória.")]
+        public DateTime ValidadeCertificado { get; set; }
+
+        // =======================================================
+        // --- 7. RELAÇÕES N:N (NOVO: IDs das tabelas auxiliares) ---
+        // =======================================================
+        [Required(ErrorMessage = "Selecione pelo menos uma especialidade.")]
+        public List<int> IdsEspecialidade { get; set; } = new List<int>();
+
+        [Required(ErrorMessage = "Selecione pelo menos um tipo de operação.")]
+        public List<int> IdsTipoOperacao { get; set; } = new List<int>();
     }
 }
